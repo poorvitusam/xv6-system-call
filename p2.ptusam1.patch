@@ -1,0 +1,903 @@
+diff -Nur xv6-p2-baseline/Makefile xv6-p2-working/Makefile
+--- xv6-p2-baseline/Makefile	2017-03-29 22:33:46.450126898 -0400
++++ xv6-p2-working/Makefile	2017-03-24 20:32:53.148084078 -0400
+@@ -28,6 +28,7 @@
+ 	uart.o\
+ 	vectors.o\
+ 	vm.o\
++	cs550_syscall.o\
+ 
+ # Cross-compiling (e.g., on Mac OS X)
+ # TOOLPREFIX = i386-jos-elf
+@@ -52,7 +53,7 @@
+ endif
+ 
+ # If the makefile can't find QEMU, specify its path here
+-# QEMU = qemu-system-i386
++QEMU = /home/kchiu/packages/linux-x86_64/bin/qemu-system-i386
+ 
+ # Try to infer the correct QEMU
+ ifndef QEMU
+@@ -175,6 +176,7 @@
+ 	_usertests\
+ 	_wc\
+ 	_zombie\
++	_cs550_user\
+ 
+ fs.img: mkfs README $(UPROGS)
+ 	./mkfs fs.img README $(UPROGS)
+@@ -243,7 +245,7 @@
+ 
+ EXTRA=\
+ 	mkfs.c ulib.c user.h cat.c echo.c forktest.c grep.c kill.c\
+-	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c zombie.c\
++	ln.c ls.c mkdir.c rm.c stressfs.c usertests.c wc.c cs550_syscall.c cs550_user.c zombie.c\
+ 	printf.c umalloc.c\
+ 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
+ 	.gdbinit.tmpl gdbutil\
+diff -Nur xv6-p2-baseline/cs550_syscall.c xv6-p2-working/cs550_syscall.c
+--- xv6-p2-baseline/cs550_syscall.c	1969-12-31 19:00:00.000000000 -0500
++++ xv6-p2-working/cs550_syscall.c	2017-03-29 22:24:28.185711522 -0400
+@@ -0,0 +1,428 @@
++#include "types.h"
++#include "param.h"
++#include "memlayout.h"
++#include "mmu.h"
++#include "proc.h"
++#include "x86.h"
++#include "syscall.h"
++#include "types.h"
++#include "defs.h"
++
++//Marks the total number of system calls for int 65
++#define SIZE_65_CALLS 50
++
++//Marks the total row number of system calls 2D arr for int 66
++#define SIZE_ROW_66_CALLS 26
++//Marks the total col number of system calls 2D arr for int 66
++#define SIZE_COL_66_CALLS 4
++
++#define getASCII(name) \
++int sys_##name(void) {\
++    int result=0, i=0;\
++    while(#name[i]!='\0') {\
++            result += #name[i];\
++            i++;\
++    }\
++    return result;\
++}
++
++//for int 65
++getASCII(aaICO)//1
++getASCII(RwwzQ)//2
++getASCII(vPlkH)//3
++getASCII(nAAkW)//4
++getASCII(V4XHy)//5
++getASCII(DIJ1J)//6
++getASCII(uby8E)//7
++getASCII(HrYmw)//8
++getASCII(It9GD)//9
++getASCII(kBqyL)//10
++getASCII(uFvqh)//11
++getASCII(kCOzo)//12
++getASCII(BdglP)//13
++getASCII(vsu9T)//14
++getASCII(GhENr)//15
++getASCII(cNlc2)//16
++getASCII(AUX47)//17
++getASCII(OJjUF)//18
++getASCII(rwbCB)//19
++getASCII(U63O6)//20
++getASCII(buYn9)//21
++getASCII(pvRfc)//22
++getASCII(IbIsf)//23
++getASCII(RH7FR)//24
++getASCII(u5Ncu)//25
++getASCII(vA3kF)//26
++getASCII(ZyJFv)//27
++getASCII(a_kuY)//28
++getASCII(DF2ak)//29
++getASCII(bifXB)//30
++getASCII(OpuAe)//31
++getASCII(DNUxN)//32
++getASCII(ancIB)//33
++getASCII(fiuCL)//34
++getASCII(f85c4)//35
++getASCII(pKQyj)//36
++getASCII(sPh9f)//37
++getASCII(aSdV9)//38
++getASCII(hEwee)//39
++getASCII(m7xSo)//40
++getASCII(lpg5S)//41
++getASCII(J7GF1)//42
++getASCII(GYEGy)//43
++getASCII(UHuoA)//44
++getASCII(lfawm)//45
++getASCII(SkxVQ)//46
++getASCII(m7dk_)//47
++getASCII(C2FTH)//48
++getASCII(ZFvwG)//49
++getASCII(xMznMiMbd2ASBAopjUBD)//50
++
++
++
++//for int 66
++getASCII(ajJ2rUS36Ds7gCvYhWvRMQ4cM)//1
++getASCII(lcQQ6)//2
++getASCII(tG0cd)//3
++getASCII(BQaye)//4
++getASCII(vRL61)//5
++getASCII(BfPAS)//6
++getASCII(rNV_x)//7
++getASCII(m9TVP)//8
++getASCII(dN3rB)//9
++getASCII(NEorw)//10
++getASCII(iE45d)//11
++getASCII(VFGu_)//12
++getASCII(zqf7e)//13
++getASCII(Ayr5H)//14
++getASCII(y7dVW)//15
++getASCII(RhaR2)//16
++getASCII(GUT_3)//17
++getASCII(mtwGL)//18
++getASCII(Rz1qA)//19
++getASCII(BDslj)//20
++getASCII(DYcHF)//21
++getASCII(XVI4N)//22
++getASCII(RknTi)//23
++getASCII(eraAb)//24
++getASCII(K7plu)//25
++getASCII(UPjQy)//26
++getASCII(uFjK1)//27
++getASCII(E8Jj9)//28
++getASCII(viJpE)//29
++getASCII(y8hmu)//30
++getASCII(GhPNY)//31
++getASCII(mEymb)//32
++getASCII(UAi7z)//33
++getASCII(g3fke)//34
++getASCII(spiXC)//35
++getASCII(sCY6P)//36
++getASCII(lQ5p2)//37
++getASCII(yFLZV)//38
++getASCII(y7NBZ)//39
++getASCII(JS_81)//40
++getASCII(pHGgA)//41
++getASCII(D3BT2)//42
++getASCII(LYSUb)//43
++getASCII(UHDeS)//44
++getASCII(zQQm5)//45
++getASCII(T4IiC)//46
++getASCII(ZnCtG)//47
++getASCII(TBDYx)//48
++getASCII(k_jNM)//49
++
++
++
++
++//Helper function for string comparison
++int strcmp(char *str1, char *str2) {
++    while(*str1==*str2) {
++     if(*str1=='\0'||*str2=='\0')
++     	break;
++     	str1++;
++	str2++;
++    }
++    if(*str1=='\0' && *str2=='\0') {
++    	return 0;
++    } else {
++	return -1;
++    }
++}
++
++
++//Implementation for date function
++struct rtcdate;
++int argptr(int, char**, int);
++void cmostime(struct rtcdate *);
++
++int sys_mydate(void) {
++    struct rtcdate *r;
++    if(argptr(0, (void*)&r, sizeof(&r)) < 0)
++    	return -1;
++	    
++    cmostime(r);
++    return 0;
++}
++
++//for virtual function
++typedef int (*Function)(void); 
++
++//Structure for linear search array and hash table entry
++typedef struct sys_calls_arr {
++	char *name;
++	Function func;	
++}SYS_CALL_ARR;
++
++
++
++//Array for linear search
++static SYS_CALL_ARR syscalls65[SIZE_65_CALLS] = {
++{(char*)"aaICO",sys_aaICO},//1
++{(char*)"RwwzQ",sys_RwwzQ},//2
++{(char*)"vPlkH",sys_vPlkH},//3
++{(char*)"nAAkW",sys_nAAkW},//4
++{(char*)"V4XHy",sys_V4XHy},//5
++{(char*)"DIJ1J",sys_DIJ1J},//6
++{(char*)"uby8E",sys_uby8E},//7
++{(char*)"HrYmw",sys_HrYmw},//8
++{(char*)"It9GD",sys_It9GD},//9
++{(char*)"kBqyL",sys_kBqyL},//10
++{(char*)"uFvqh",sys_uFvqh},//11
++{(char*)"kCOzo",sys_kCOzo},//12
++{(char*)"BdglP",sys_BdglP},//13
++{(char*)"vsu9T",sys_vsu9T},//14
++{(char*)"GhENr",sys_GhENr},//15
++{(char*)"cNlc2",sys_cNlc2},//16
++{(char*)"AUX47",sys_AUX47},//17
++{(char*)"OJjUF",sys_OJjUF},//18
++{(char*)"rwbCB",sys_rwbCB},//19
++{(char*)"U63O6",sys_U63O6},//20
++{(char*)"buYn9",sys_buYn9},//21
++{(char*)"pvRfc",sys_pvRfc},//22
++{(char*)"IbIsf",sys_IbIsf},//23
++{(char*)"RH7FR",sys_RH7FR},//24
++{(char*)"u5Ncu",sys_u5Ncu},//25
++{(char*)"vA3kF",sys_vA3kF},//26
++{(char*)"ZyJFv",sys_ZyJFv},//27
++{(char*)"a_kuY",sys_a_kuY},//28
++{(char*)"DF2ak",sys_DF2ak},//29
++{(char*)"bifXB",sys_bifXB},//30
++{(char*)"OpuAe",sys_OpuAe},//31
++{(char*)"DNUxN",sys_DNUxN},//32
++{(char*)"ancIB",sys_ancIB},//33
++{(char*)"fiuCL",sys_fiuCL},//34
++{(char*)"f85c4",sys_f85c4},//35
++{(char*)"pKQyj",sys_pKQyj},//36
++{(char*)"sPh9f",sys_sPh9f},//37
++{(char*)"aSdV9",sys_aSdV9},//38
++{(char*)"hEwee",sys_hEwee},//39
++{(char*)"m7xSo",sys_m7xSo},//40
++{(char*)"lpg5S",sys_lpg5S},//41
++{(char*)"J7GF1",sys_J7GF1},//42
++{(char*)"GYEGy",sys_GYEGy},//43
++{(char*)"UHuoA",sys_UHuoA},//44
++{(char*)"lfawm",sys_lfawm},//45
++{(char*)"SkxVQ",sys_SkxVQ},//46
++{(char*)"m7dk_",sys_m7dk_},//47
++{(char*)"C2FTH",sys_C2FTH},//48
++{(char*)"ZFvwG",sys_ZFvwG},//49
++{(char*)"xMznMiMbd2ASBAopjUBD",sys_xMznMiMbd2ASBAopjUBD},//50
++};
++
++
++
++//system call for int 65 using linear search
++void syscall65(void)
++{
++	char * str_name = (char *)proc->tf->eax;
++	int i;
++	for(i=0;i<SIZE_65_CALLS;i++) {
++		if(strcmp(syscalls65[i].name, str_name)==0) {
++			proc->tf->eax =  syscalls65[i].func();
++			return;
++		} 
++	}
++	proc->tf->eax = -1;
++}
++
++
++//2D array for system calls based on the initials
++static SYS_CALL_ARR syscalls66[SIZE_ROW_66_CALLS][SIZE_COL_66_CALLS] = {
++{{},{},{},{}},//a
++{{},{},{},{}},//b
++{{},{},{},{}},//c
++{{},{},{},{}},//d
++{{},{},{},{}},//e
++{{},{},{},{}},//f
++{{},{},{},{}},//g
++{{},{},{},{}},//h
++{{},{},{},{}},//i
++{{},{},{},{}},//j
++{{},{},{},{}},//k
++{{},{},{},{}},//l
++{{},{},{},{}},//m
++{{},{},{},{}},//n
++{{},{},{},{}},//o
++{{},{},{},{}},//p
++{{},{},{},{}},//q
++{{},{},{},{}},//r
++{{},{},{},{}},//s
++{{},{},{},{}},//t
++{{},{},{},{}},//u
++{{},{},{},{}},//v
++{{},{},{},{}},//w
++{{},{},{},{}},//x
++{{},{},{},{}},//y
++{{},{},{},{}},//z
++};
++
++int chaining_search(int entry, char * call_name) {
++	int j=0, flag=1;
++	while( j<SIZE_COL_66_CALLS) {
++		if (strcmp(syscalls66[entry][j].name,call_name) ==0) {
++			flag=0;
++			break;
++		}
++		j++;
++	}
++	if(flag==0) {
++		return j;
++	} else {
++		return -1;	
++	}
++}
++
++void syscall66(void) {
++    char * str_name = (char *)proc->tf->eax;
++	
++	int hash_entry;
++	char c = str_name[0];
++	char A = 'A';
++	char Z = 'Z';
++	char a = 'a';
++	char z = 'z';
++	if(c>=A && c<=Z) {
++		hash_entry = c-A;
++		
++	} else if(c>=a && c<=z) {
++		hash_entry = c-a;
++	} else {
++		proc->tf->eax=-1;
++		return;		
++	}
++
++	int col=chaining_search(hash_entry, str_name);
++	if(col>=0) {
++		proc->tf->eax=syscalls66[hash_entry][col].func();	
++	} else {
++		proc->tf->eax=-1;	
++	}
++}
++
++int calculatehash(char * str_name) {
++	int hash_entry=-1;
++	char c = str_name[0];
++	char A = 'A';
++	char Z = 'Z';
++	char a = 'a';
++	char z = 'z';
++	if(c>=A && c<=Z) {
++		hash_entry = c-A;
++		
++	} else if(c>=a && c<=z) {
++		hash_entry = c-a;
++	} else {
++		hash_entry=-1;
++	}
++	return hash_entry;
++}
++
++
++void handleCollision(int entry, char* name, int (* func)(void)) {
++	int j=0, flag=0;
++	while(syscalls66[entry][j].name && j<SIZE_COL_66_CALLS) {
++		j++;
++		flag=1;
++	}
++	if(flag==1) {
++		syscalls66[entry][j].name=name;
++		syscalls66[entry][j].func=func;
++	}
++}
++
++void insertHashEntry(char * name, int (* func)(void)) {
++	int hash_entry = calculatehash(name);
++
++	if(hash_entry<0 || hash_entry>=SIZE_ROW_66_CALLS) {
++		return;
++	}
++
++	if(syscalls66[hash_entry][0].name) {
++		handleCollision(hash_entry ,name, func);
++	} else {
++		syscalls66[hash_entry][0].name=name;
++		syscalls66[hash_entry][0].func=func;
++	}
++}
++
++/*void printHash() {
++	int i,j;
++	for(i=0;i<26;i++) {
++		for(j=0;j<4;j++) {
++			cprintf("row:%d col:%d :%s\t",i,j,syscalls66[i][j].name); 
++		}
++		cprintf("\n");
++	}	
++}*/
++
++void initialiseHashmap () {
++	insertHashEntry("Ayr5H",sys_Ayr5H);//1
++	insertHashEntry("lcQQ6",sys_lcQQ6);//2
++	insertHashEntry("tG0cd",sys_tG0cd);//3
++	insertHashEntry("BQaye",sys_BQaye);//4
++	insertHashEntry("vRL61",sys_vRL61);//5
++	insertHashEntry("BfPAS",sys_BfPAS);//6
++	insertHashEntry("rNV_x",sys_rNV_x);//7
++	insertHashEntry("m9TVP",sys_m9TVP);//8
++	insertHashEntry("dN3rB",sys_dN3rB);//9
++	insertHashEntry("NEorw",sys_NEorw);//10
++	insertHashEntry("iE45d",sys_iE45d);//11
++	insertHashEntry("VFGu_",sys_VFGu_);//12
++	insertHashEntry("zqf7e",sys_zqf7e);//13
++	insertHashEntry("ajJ2rUS36Ds7gCvYhWvRMQ4cM",sys_ajJ2rUS36Ds7gCvYhWvRMQ4cM);//14
++	insertHashEntry("y7dVW",sys_y7dVW);//15
++	insertHashEntry("RhaR2",sys_RhaR2);//16
++	insertHashEntry("GUT_3",sys_GUT_3);//17
++	insertHashEntry("mtwGL",sys_mtwGL);//18
++	insertHashEntry("Rz1qA",sys_Rz1qA);//19
++	insertHashEntry("BDslj",sys_BDslj);//20
++	insertHashEntry("DYcHF",sys_DYcHF);//21
++	insertHashEntry("XVI4N",sys_XVI4N);//22
++	insertHashEntry("RknTi",sys_RknTi);//23
++	insertHashEntry("eraAb",sys_eraAb);//24
++	insertHashEntry("K7plu",sys_K7plu);//25
++	insertHashEntry("UPjQy",sys_UPjQy);//26
++	insertHashEntry("uFjK1",sys_uFjK1);//27
++	insertHashEntry("E8Jj9",sys_E8Jj9);//28
++	insertHashEntry("viJpE",sys_viJpE);//29
++	insertHashEntry("y8hmu",sys_y8hmu);//30
++	insertHashEntry("GhPNY",sys_GhPNY);//31
++	insertHashEntry("mEymb",sys_mEymb);//32
++	insertHashEntry("UAi7z",sys_UAi7z);//33
++	insertHashEntry("g3fke",sys_g3fke);//34
++	insertHashEntry("spiXC",sys_spiXC);//35
++	insertHashEntry("sCY6P",sys_sCY6P);//36
++	insertHashEntry("lQ5p2",sys_lQ5p2);//37
++	insertHashEntry("yFLZV",sys_yFLZV);//38
++	insertHashEntry("y7NBZ",sys_y7NBZ);//39
++	insertHashEntry("JS_81",sys_JS_81);//40
++	insertHashEntry("pHGgA",sys_pHGgA);//41
++	insertHashEntry("D3BT2",sys_D3BT2);//42
++	insertHashEntry("LYSUb",sys_LYSUb);//43
++	insertHashEntry("UHDeS",sys_UHDeS);//44
++	insertHashEntry("zQQm5",sys_zQQm5);//45
++	insertHashEntry("T4IiC",sys_T4IiC);//46
++	insertHashEntry("ZnCtG",sys_ZnCtG);//47
++	insertHashEntry("TBDYx",sys_TBDYx);//48
++	insertHashEntry("k_jNM",sys_k_jNM);//49
++}
+diff -Nur xv6-p2-baseline/cs550_user.c xv6-p2-working/cs550_user.c
+--- xv6-p2-baseline/cs550_user.c	1969-12-31 19:00:00.000000000 -0500
++++ xv6-p2-working/cs550_user.c	2017-03-29 22:11:14.786236979 -0400
+@@ -0,0 +1,138 @@
++#include "types.h"
++#include "user.h"
++#include "date.h"
++
++//Declarations
++int mydate(struct rtcdate *);
++
++//For linear search
++int aaICO(void);
++int xMznMiMbd2ASBAopjUBD(void);
++
++//For hash table
++int Ayr5H(void);
++int y7NBZ(void);
++
++
++int main() {
++        int start_time, stop_time,itr, result, val=-1, rv;
++
++	//Date with exusting implementation
++	struct rtcdate r;
++        if (mydate(&r)) {
++                printf(2, "date failed\n");
++        }
++	
++        printf(1,"%s\n","Printing results for date" );
++        printf(1, "%d-%d-%d %d:%d:%d\n",r.year, r.month, r.day, r.hour, r.minute, r.second);
++
++	printf(1,"\n**Testing for date bad address\n");
++	struct rtcdate *r1=(struct  rtcdate *)-2;
++        if (mydate(r1)) {
++		asm volatile("movl %%eax, %0" : "=rm" (rv) : );
++               	printf(1,"Value return: %d\t",rv);
++		printf(2, "date failed\n");
++        }
++
++	printf(1,"\n");
++
++	//Performance for pid
++	printf(1,"\nPerformance for pid: ");
++	start_time=uptime();
++	for(itr=0;itr<1000000;itr++) {
++		val=getpid();
++	}
++	stop_time=uptime();
++	result=(stop_time-start_time)*10;
++	printf(1, "%d%s",result," nanoseconds");
++
++	printf(1,"\n");
++
++	//First element in the linear search array
++	val=aaICO();
++	printf(1,"\nASCII for aaICO %d",val);
++	printf(1,"\nPerformance by linear search for aaICO (First entry): ");
++        start_time=uptime();
++        for(itr=0;itr<1000000;itr++) {
++                val=aaICO();
++        }
++        stop_time=uptime();
++        result=(stop_time-start_time)*10;
++        printf(1, "%d%s",result," nanoseconds");
++	if (val <0 ) {
++                printf(2, "ascii failed\n");
++        }
++
++	printf(1,"\n");
++
++	//Last element in the linear search array
++	val=xMznMiMbd2ASBAopjUBD();
++        printf(1,"\nASCII for xMznMiMbd2ASBAopjUBD %d",val);
++        printf(1,"\nPerformance by linear search for xMznMiMbd2ASBAopjUBD (last entry): ");
++        start_time=uptime();
++        for(itr=0;itr<1000000;itr++) {
++                val=xMznMiMbd2ASBAopjUBD();
++        }
++        stop_time=uptime();
++        result=(stop_time-start_time)*10;
++        printf(1, "%d%s",result," nanoseconds");
++        if (val <0 ) {
++                printf(2, "ascii failed\n");
++        }
++
++	printf(1,"\n");
++
++	//First entry in the hash table
++        printf(1,"\nASCII for Ayr5H %d",val);
++        printf(1,"\nPerformance using hash table for Ayr5H (First entry): ");
++        start_time=uptime();
++        for(itr=0;itr<1000000;itr++) {
++                val=Ayr5H();
++        }
++        stop_time=uptime();
++        result=(stop_time-start_time)*10;
++        printf(1, "%d%s",result," nanoseconds");
++        if (val <0 ) {
++                printf(2, "ascii failed\n");
++        }
++
++	printf(1,"\n");
++
++	//Last entry with most collision in the hash table
++	val=y7NBZ();
++        printf(1,"\nASCII for y7NBZ  %d",val);
++        printf(1,"\nPerformance using hash table for y7NBZ (Last entry with most collision): ");
++        start_time=uptime();
++        for(itr=0;itr<1000000;itr++) {
++                val=y7NBZ();
++        }
++        stop_time=uptime();
++        result=(stop_time-start_time)*10;
++        printf(1, "%d%s",result," nanoseconds");
++        if (val <0 ) {
++                printf(2, "ascii failed\n");
++        }
++
++	printf(1,"\n\n");
++
++	printf(1,"***Testing code for unknown system call name or a bad string address***\n\n");
++
++	printf(1,"Calling ajJ2rUS36Ds7gCvYhWvRMQ4cM (Entry in hash table) with int 65: \n");
++	char *p = "ajJ2rUS36Ds7gCvYhWvRMQ4cM";
++	asm volatile("movl %0, %%eax" : : "rm" (p));
++	asm volatile("int $65" : :);
++	asm volatile("movl %%eax, %0" : "=rm" (rv) : );
++	printf(1,"Value returned: %d\n",rv);
++
++	printf(1,"\n");
++ 
++	printf(1,"Calling aaICO (Entry for linear search) with int 66: \n");
++        p = "aaICO";
++        asm volatile("movl %0, %%eax" : : "rm" (p));
++        asm volatile("int $66" : :);
++        asm volatile("movl %%eax, %0" : "=rm" (rv) : );
++        printf(1,"Value returned: %d\n",rv);
++
++	exit();
++        return 0;
++}
+diff -Nur xv6-p2-baseline/defs.h xv6-p2-working/defs.h
+--- xv6-p2-baseline/defs.h	2017-03-29 22:33:39.686267063 -0400
++++ xv6-p2-working/defs.h	2017-03-29 22:48:49.927441785 -0400
+@@ -116,7 +116,6 @@
+ int             wait(void);
+ void            wakeup(void*);
+ void            yield(void);
+-
+ // swtch.S
+ void            swtch(struct context**, struct context*);
+ 
+diff -Nur xv6-p2-baseline/syscall.c xv6-p2-working/syscall.c
+--- xv6-p2-baseline/syscall.c	2017-03-29 22:33:54.293964357 -0400
++++ xv6-p2-working/syscall.c	2017-03-29 22:51:09.956551915 -0400
+@@ -7,6 +7,8 @@
+ #include "x86.h"
+ #include "syscall.h"
+ 
++int sys_mydate(void);
++
+ // User code makes a system call with INT T_SYSCALL.
+ // System call number in %eax.
+ // Arguments on the stack, from the user call to the C
+@@ -98,6 +100,7 @@
+ extern int sys_wait(void);
+ extern int sys_write(void);
+ extern int sys_uptime(void);
++extern int sys_mydate(void);
+ 
+ static int (*syscalls[])(void) = {
+ [SYS_fork]    sys_fork,
+@@ -121,13 +124,13 @@
+ [SYS_link]    sys_link,
+ [SYS_mkdir]   sys_mkdir,
+ [SYS_close]   sys_close,
++[SYS_mydate]  sys_mydate,
+ };
+ 
+ void
+ syscall(void)
+ {
+   int num;
+-
+   num = proc->tf->eax;
+   if(num > 0 && num < NELEM(syscalls) && syscalls[num]) {
+     proc->tf->eax = syscalls[num]();
+diff -Nur xv6-p2-baseline/syscall.h xv6-p2-working/syscall.h
+--- xv6-p2-baseline/syscall.h	2017-03-29 22:33:54.601957974 -0400
++++ xv6-p2-working/syscall.h	2017-03-24 20:06:32.443170686 -0400
+@@ -20,3 +20,4 @@
+ #define SYS_link   19
+ #define SYS_mkdir  20
+ #define SYS_close  21
++#define SYS_mydate 22
+diff -Nur xv6-p2-baseline/sysproc.c xv6-p2-working/sysproc.c
+--- xv6-p2-baseline/sysproc.c	2017-03-29 22:33:54.997949768 -0400
++++ xv6-p2-working/sysproc.c	2017-03-29 22:51:37.679979947 -0400
+@@ -6,7 +6,6 @@
+ #include "memlayout.h"
+ #include "mmu.h"
+ #include "proc.h"
+-
+ int
+ sys_fork(void)
+ {
+diff -Nur xv6-p2-baseline/trap.c xv6-p2-working/trap.c
+--- xv6-p2-baseline/trap.c	2017-03-29 22:33:55.741934351 -0400
++++ xv6-p2-working/trap.c	2017-03-29 22:52:26.742967862 -0400
+@@ -7,13 +7,14 @@
+ #include "x86.h"
+ #include "traps.h"
+ #include "spinlock.h"
+-
+ // Interrupt descriptor table (shared by all CPUs).
+ struct gatedesc idt[256];
+ extern uint vectors[];  // in vectors.S: array of 256 entry pointers
+ struct spinlock tickslock;
+ uint ticks;
+-
++void syscall65();
++void syscall66();
++void initialiseHashmap ();
+ void
+ tvinit(void)
+ {
+@@ -22,8 +23,11 @@
+   for(i = 0; i < 256; i++)
+     SETGATE(idt[i], 0, SEG_KCODE<<3, vectors[i], 0);
+   SETGATE(idt[T_SYSCALL], 1, SEG_KCODE<<3, vectors[T_SYSCALL], DPL_USER);
+-
++	SETGATE(idt[T_SYSCALL_65], 1, SEG_KCODE<<3, vectors[T_SYSCALL_65], DPL_USER);
++    SETGATE(idt[T_SYSCALL_66], 1, SEG_KCODE<<3, vectors[T_SYSCALL_66], DPL_USER);
+   initlock(&tickslock, "time");
++	
++	initialiseHashmap();
+ }
+ 
+ void
+@@ -36,7 +40,9 @@
+ void
+ trap(struct trapframe *tf)
+ {
++
+   if(tf->trapno == T_SYSCALL){
++	
+     if(proc->killed)
+       exit();
+     proc->tf = tf;
+@@ -45,7 +51,24 @@
+       exit();
+     return;
+   }
+-
++if(tf->trapno == T_SYSCALL_65){
++    if(proc->killed)
++      exit();
++    proc->tf = tf;
++   syscall65();
++    if(proc->killed)
++      exit();
++    return;
++  }
++  if(tf->trapno == T_SYSCALL_66){
++    if(proc->killed)
++      exit();
++    proc->tf = tf;
++    syscall66();
++    if(proc->killed)
++      exit();
++    return;
++  }
+   switch(tf->trapno){
+   case T_IRQ0 + IRQ_TIMER:
+     if(cpunum() == 0){
+diff -Nur xv6-p2-baseline/traps.h xv6-p2-working/traps.h
+--- xv6-p2-baseline/traps.h	2017-03-29 22:33:56.125926394 -0400
++++ xv6-p2-working/traps.h	2017-03-22 23:53:48.610132869 -0400
+@@ -26,6 +26,8 @@
+ // processor defined exceptions or interrupt vectors.
+ #define T_SYSCALL       64      // system call
+ #define T_DEFAULT      500      // catchall
++#define T_SYSCALL_65       65      // system call
++#define T_SYSCALL_66       66      // system call
+ 
+ #define T_IRQ0          32      // IRQ 0 corresponds to int T_IRQ
+ 
+diff -Nur xv6-p2-baseline/usys.S xv6-p2-working/usys.S
+--- xv6-p2-baseline/usys.S	2017-03-29 22:33:57.665894484 -0400
++++ xv6-p2-working/usys.S	2017-03-28 21:13:36.872777672 -0400
+@@ -8,6 +8,30 @@
+     int $T_SYSCALL; \
+     ret
+ 
++    .globl date; \
++  date: \
++    movl $DATE_STRING, %eax; \
++    int $T_SYSCALL; \
++    ret
++    DATE_STRING: \
++    	.string "mydate" \
++
++#define SYSCALL65(name) \
++	.globl name; \
++	SYS_ ## name: .string #name;\
++	name: \
++	movl $SYS_ ## name, %eax; \
++	int $T_SYSCALL_65; \
++	ret
++
++#define SYSCALL66(name) \
++        .globl name; \
++        SYS_ ## name: .string #name;\
++        name: \
++        movl $SYS_ ## name, %eax; \
++        int $T_SYSCALL_66; \
++        ret
++
+ SYSCALL(fork)
+ SYSCALL(exit)
+ SYSCALL(wait)
+@@ -29,3 +53,111 @@
+ SYSCALL(sbrk)
+ SYSCALL(sleep)
+ SYSCALL(uptime)
++SYSCALL(mydate)
++
++//System calls for linear search
++SYSCALL65(aaICO)//0
++SYSCALL65(xMznMiMbd2ASBAopjUBD)//1
++SYSCALL65(RwwzQ)//2
++SYSCALL65(vPlkH)//3
++SYSCALL65(nAAkW)//4
++SYSCALL65(V4XHy)//5
++SYSCALL65(DIJ1J)//6
++SYSCALL65(uby8E)//7
++SYSCALL65(HrYmw)//8
++SYSCALL65(It9GD)//9
++SYSCALL65(kBqyL)//10
++SYSCALL65(uFvqh)//11
++SYSCALL65(kCOzo)//12
++SYSCALL65(BdglP)//13
++SYSCALL65(vsu9T)//14
++SYSCALL65(GhENr)//15
++SYSCALL65(cNlc2)//16
++SYSCALL65(AUX47)//17
++SYSCALL65(OJjUF)//18
++SYSCALL65(rwbCB)//19
++SYSCALL65(U63O6)//20
++SYSCALL65(buYn9)//21
++SYSCALL65(pvRfc)//22
++SYSCALL65(IbIsf)//23
++SYSCALL65(RH7FR)//24
++SYSCALL65(u5Ncu)//25
++SYSCALL65(vA3kF)//26
++SYSCALL65(ZyJFv)//27
++SYSCALL65(a_kuY)//28
++SYSCALL65(DF2ak)//29
++SYSCALL65(bifXB)//30
++SYSCALL65(OpuAe)//31
++SYSCALL65(DNUxN)//32
++SYSCALL65(ancIB)//33
++SYSCALL65(fiuCL)//34
++SYSCALL65(f85c4)//35
++SYSCALL65(pKQyj)//36
++SYSCALL65(sPh9f)//37
++SYSCALL65(aSdV9)//38
++SYSCALL65(hEwee)//39
++SYSCALL65(m7xSo)//40
++SYSCALL65(lpg5S)//41
++SYSCALL65(J7GF1)//42
++SYSCALL65(GYEGy)//43
++SYSCALL65(UHuoA)//44
++SYSCALL65(lfawm)//45
++SYSCALL65(SkxVQ)//46
++SYSCALL65(m7dk_)//47
++SYSCALL65(C2FTH)//48
++SYSCALL65(ZFvwG)//49
++
++
++
++//System call using hash table
++SYSCALL66(ajJ2rUS36Ds7gCvYhWvRMQ4cM)//1
++SYSCALL66(lcQQ6)//2
++SYSCALL66(tG0cd)//3
++SYSCALL66(BQaye)//4
++SYSCALL66(vRL61)//5
++SYSCALL66(BfPAS)//6
++SYSCALL66(rNV_x)//7
++SYSCALL66(m9TVP)//8
++SYSCALL66(dN3rB)//9
++SYSCALL66(NEorw)//10
++SYSCALL66(iE45d)//11
++SYSCALL66(VFGu_)//12
++SYSCALL66(zqf7e)//13
++SYSCALL66(Ayr5H)//14
++SYSCALL66(y7dVW)//15
++SYSCALL66(RhaR2)//16
++SYSCALL66(GUT_3)//17
++SYSCALL66(mtwGL)//18
++SYSCALL66(Rz1qA)//19
++SYSCALL66(BDslj)//20
++SYSCALL66(DYcHF)//21
++SYSCALL66(XVI4N)//22
++SYSCALL66(RknTi)//23
++SYSCALL66(eraAb)//24
++SYSCALL66(K7plu)//25
++SYSCALL66(UPjQy)//26
++SYSCALL66(uFjK1)//27
++SYSCALL66(E8Jj9)//28
++SYSCALL66(viJpE)//29
++SYSCALL66(y8hmu)//30
++SYSCALL66(GhPNY)//31
++SYSCALL66(mEymb)//32
++SYSCALL66(UAi7z)//33
++SYSCALL66(g3fke)//34
++SYSCALL66(spiXC)//35
++SYSCALL66(sCY6P)//36
++SYSCALL66(lQ5p2)//37
++SYSCALL66(yFLZV)//38
++SYSCALL66(y7NBZ)//39
++SYSCALL66(JS_81)//40
++SYSCALL66(pHGgA)//41
++SYSCALL66(D3BT2)//42
++SYSCALL66(LYSUb)//43
++SYSCALL66(UHDeS)//44
++SYSCALL66(zQQm5)//45
++SYSCALL66(T4IiC)//46
++SYSCALL66(ZnCtG)//47
++SYSCALL66(TBDYx)//48
++SYSCALL66(k_jNM)//49
++
++

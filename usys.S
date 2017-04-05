@@ -1,0 +1,163 @@
+#include "syscall.h"
+#include "traps.h"
+
+#define SYSCALL(name) \
+  .globl name; \
+  name: \
+    movl $SYS_ ## name, %eax; \
+    int $T_SYSCALL; \
+    ret
+
+    .globl date; \
+  date: \
+    movl $DATE_STRING, %eax; \
+    int $T_SYSCALL; \
+    ret
+    DATE_STRING: \
+    	.string "mydate" \
+
+#define SYSCALL65(name) \
+	.globl name; \
+	SYS_ ## name: .string #name;\
+	name: \
+	movl $SYS_ ## name, %eax; \
+	int $T_SYSCALL_65; \
+	ret
+
+#define SYSCALL66(name) \
+        .globl name; \
+        SYS_ ## name: .string #name;\
+        name: \
+        movl $SYS_ ## name, %eax; \
+        int $T_SYSCALL_66; \
+        ret
+
+SYSCALL(fork)
+SYSCALL(exit)
+SYSCALL(wait)
+SYSCALL(pipe)
+SYSCALL(read)
+SYSCALL(write)
+SYSCALL(close)
+SYSCALL(kill)
+SYSCALL(exec)
+SYSCALL(open)
+SYSCALL(mknod)
+SYSCALL(unlink)
+SYSCALL(fstat)
+SYSCALL(link)
+SYSCALL(mkdir)
+SYSCALL(chdir)
+SYSCALL(dup)
+SYSCALL(getpid)
+SYSCALL(sbrk)
+SYSCALL(sleep)
+SYSCALL(uptime)
+SYSCALL(mydate)
+
+//System calls for linear search
+SYSCALL65(aaICO)//0
+SYSCALL65(xMznMiMbd2ASBAopjUBD)//1
+SYSCALL65(RwwzQ)//2
+SYSCALL65(vPlkH)//3
+SYSCALL65(nAAkW)//4
+SYSCALL65(V4XHy)//5
+SYSCALL65(DIJ1J)//6
+SYSCALL65(uby8E)//7
+SYSCALL65(HrYmw)//8
+SYSCALL65(It9GD)//9
+SYSCALL65(kBqyL)//10
+SYSCALL65(uFvqh)//11
+SYSCALL65(kCOzo)//12
+SYSCALL65(BdglP)//13
+SYSCALL65(vsu9T)//14
+SYSCALL65(GhENr)//15
+SYSCALL65(cNlc2)//16
+SYSCALL65(AUX47)//17
+SYSCALL65(OJjUF)//18
+SYSCALL65(rwbCB)//19
+SYSCALL65(U63O6)//20
+SYSCALL65(buYn9)//21
+SYSCALL65(pvRfc)//22
+SYSCALL65(IbIsf)//23
+SYSCALL65(RH7FR)//24
+SYSCALL65(u5Ncu)//25
+SYSCALL65(vA3kF)//26
+SYSCALL65(ZyJFv)//27
+SYSCALL65(a_kuY)//28
+SYSCALL65(DF2ak)//29
+SYSCALL65(bifXB)//30
+SYSCALL65(OpuAe)//31
+SYSCALL65(DNUxN)//32
+SYSCALL65(ancIB)//33
+SYSCALL65(fiuCL)//34
+SYSCALL65(f85c4)//35
+SYSCALL65(pKQyj)//36
+SYSCALL65(sPh9f)//37
+SYSCALL65(aSdV9)//38
+SYSCALL65(hEwee)//39
+SYSCALL65(m7xSo)//40
+SYSCALL65(lpg5S)//41
+SYSCALL65(J7GF1)//42
+SYSCALL65(GYEGy)//43
+SYSCALL65(UHuoA)//44
+SYSCALL65(lfawm)//45
+SYSCALL65(SkxVQ)//46
+SYSCALL65(m7dk_)//47
+SYSCALL65(C2FTH)//48
+SYSCALL65(ZFvwG)//49
+
+
+
+//System call using hash table
+SYSCALL66(ajJ2rUS36Ds7gCvYhWvRMQ4cM)//1
+SYSCALL66(lcQQ6)//2
+SYSCALL66(tG0cd)//3
+SYSCALL66(BQaye)//4
+SYSCALL66(vRL61)//5
+SYSCALL66(BfPAS)//6
+SYSCALL66(rNV_x)//7
+SYSCALL66(m9TVP)//8
+SYSCALL66(dN3rB)//9
+SYSCALL66(NEorw)//10
+SYSCALL66(iE45d)//11
+SYSCALL66(VFGu_)//12
+SYSCALL66(zqf7e)//13
+SYSCALL66(Ayr5H)//14
+SYSCALL66(y7dVW)//15
+SYSCALL66(RhaR2)//16
+SYSCALL66(GUT_3)//17
+SYSCALL66(mtwGL)//18
+SYSCALL66(Rz1qA)//19
+SYSCALL66(BDslj)//20
+SYSCALL66(DYcHF)//21
+SYSCALL66(XVI4N)//22
+SYSCALL66(RknTi)//23
+SYSCALL66(eraAb)//24
+SYSCALL66(K7plu)//25
+SYSCALL66(UPjQy)//26
+SYSCALL66(uFjK1)//27
+SYSCALL66(E8Jj9)//28
+SYSCALL66(viJpE)//29
+SYSCALL66(y8hmu)//30
+SYSCALL66(GhPNY)//31
+SYSCALL66(mEymb)//32
+SYSCALL66(UAi7z)//33
+SYSCALL66(g3fke)//34
+SYSCALL66(spiXC)//35
+SYSCALL66(sCY6P)//36
+SYSCALL66(lQ5p2)//37
+SYSCALL66(yFLZV)//38
+SYSCALL66(y7NBZ)//39
+SYSCALL66(JS_81)//40
+SYSCALL66(pHGgA)//41
+SYSCALL66(D3BT2)//42
+SYSCALL66(LYSUb)//43
+SYSCALL66(UHDeS)//44
+SYSCALL66(zQQm5)//45
+SYSCALL66(T4IiC)//46
+SYSCALL66(ZnCtG)//47
+SYSCALL66(TBDYx)//48
+SYSCALL66(k_jNM)//49
+
+
